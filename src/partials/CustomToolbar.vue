@@ -16,4 +16,5 @@
 export default {
   props: ['title', 'backLabel']
 };
+
 </script>

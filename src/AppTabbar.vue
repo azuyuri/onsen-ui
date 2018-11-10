@@ -1,16 +1,15 @@
 <template>
   <v-ons-page>
-    <custom-toolbar>
-      {{ title }}
-      <v-ons-toolbar-button slot="right" @click="toggleMenu()">
-        <v-ons-icon icon="ion-navicon, material:md-menu"></v-ons-icon>
-      </v-ons-toolbar-button>
-    </custom-toolbar>
-
-    <v-ons-tabbar position="auto"
+    <v-ons-toolbar :style="swipeTheme">
+      <div class="center">Swiping Tab Bar</div>
+    </v-ons-toolbar>
+    <v-ons-tabbar
+      swipeable
+      position="top"
       :tabs="tabs"
-      :index.sync="index"
-    ></v-ons-tabbar>
+      :on-swipe="onSwipe"
+      :tabbar-style="swipeTheme"
+    />
   </v-ons-page>
 </template>
 
@@ -18,54 +17,51 @@
 import Home from './pages/Home.vue';
 import Forms from './pages/Forms.vue';
 import Animations from './pages/Animations.vue';
-
+// Just a linear interpolation formula
+const lerp = (x0, x1, t) => parseInt((1 - t) * x0 + t * x1, 10);
+// RGB colors
+const red = [244, 67, 54];
+const blue = [30, 136, 229];
+const purple = [103, 58, 183];
 export default {
-  props: ['pageStack', 'setOptions', 'toggleMenu', 'setIndex'],
-
   data () {
     return {
+      colors: red,
+      animationOptions: {},
       tabs: [
         {
-          label: 'Home',
-          icon: this.md() ? null : 'ion-home',
           page: Home,
-          props: { pageStack: this.pageStack }
+          label: 'Home',
+          theme: red
         },
         {
+          page: Forms,
           label: 'Forms',
-          icon: this.md() ? null : 'ion-edit',
-          page: Forms
+          theme: blue
         },
         {
-          label: 'Anim',
-          icon: this.md() ? null : 'ion-film-marker',
           page: Animations,
-          props: {
-            pageStack: this.pageStack,
-            setOptions: this.setOptions
-          }
+          label: 'Anim',
+          theme: purple
         }
       ]
     };
   },
-
-  methods: {
-    md() {
-      return this.$ons.platform.isAndroid();
+  computed: {
+    swipeTheme() {
+      return {
+        backgroundColor: `rgb(${this.colors.join(',')})`,
+        transition: `all ${this.animationOptions.duration || 0}s ${this.animationOptions.timing || ''}`
+      }
     }
   },
-
-  computed: {
-    title() {
-      return this.md() ? 'Kitchen Sink' : this.tabs[this.index].label;
-    },
-    index: {
-      get() {
-        return this.setIndex(); // Without args returns the current index
-      },
-      set(index) {
-        this.setIndex(index);
-      }
+  methods: {
+    onSwipe(index, animationOptions) {
+      // Apply the same transition as v-ons-tabbar
+      this.animationOptions = animationOptions;
+      // Interpolate colors
+      const a = Math.floor(index), b = Math.ceil(index), ratio = index % 1;
+      this.colors = this.colors.map((c, i) => lerp(this.tabs[a].theme[i], this.tabs[b].theme[i], ratio));
     }
   }
 };
